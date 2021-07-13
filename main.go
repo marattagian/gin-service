@@ -6,21 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// postAlbums adds an album from JSON received in the request body
-func postAlbums(c *gin.Context) {
-	var newAlbum album
-
-	// call BindJSON to bind the received JSON
-	// to newAlbum
-	if err := c.BindJSON(&newAlbum); err != nil {
-		return
-	}
-
-	// add the new album to the slice
-	albums = append(albums, newAlbum)
-	c.IndentedJSON(http.StatusCreated, newAlbum)
-}
-
+// album represents data about a record album.
 type album struct {
 	ID     string  `json:"id"`
 	Title  string  `json:"title"`
@@ -36,9 +22,10 @@ var albums = []album{
 }
 
 func main() {
-	router := gin.Default()            // initialize a gin router
-	router.GET("/albums", getAlbums)   // pass the function, without calling it
-	router.POST("/albums", postAlbums) // attach the function to the request
+	router := gin.Default()                 // initialize a gin router
+	router.GET("/albums", getAlbums)        // pass the function, without calling it
+	router.GET("/albums/:id", getAlbumByID) // retrieve an specific item
+	router.POST("/albums", postAlbums)      // attach the function to the request
 
 	router.Run("localhost:8080") // attach the router to an http.Server and starts it
 }
@@ -47,4 +34,35 @@ func main() {
 func getAlbums(c *gin.Context) {
 	// serialize the JSON adding the status response
 	c.IndentedJSON(http.StatusOK, albums)
+}
+
+// getAlbumByID() locates the album whose ID value matches the id
+// parameter sent by the client, then returns that album as a response.
+func getAlbumByID(c *gin.Context) {
+	id := c.Param("id")
+
+	// Loop over the list of albums, looking for
+	// an album whose ID value mathces the parameter
+	for _, a := range albums {
+		if a.ID == id {
+			c.IndentedJSON(http.StatusOK, a)
+			return
+		}
+	}
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
+}
+
+// postAlbums adds an album from JSON received in the request body
+func postAlbums(c *gin.Context) {
+	var newAlbum album
+
+	// call BindJSON to bind the received JSON
+	// to newAlbum
+	if err := c.BindJSON(&newAlbum); err != nil {
+		return
+	}
+
+	// add the new album to the slice
+	albums = append(albums, newAlbum)
+	c.IndentedJSON(http.StatusCreated, newAlbum)
 }
